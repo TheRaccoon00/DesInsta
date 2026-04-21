@@ -68,6 +68,7 @@ jobs:
             --scheme "$SCHEME" \
             --clean \
             --export_method app-store \
+            --export_options "{ \"provisioningProfiles\": { \"com.clementfoissard.desinsta\": \"$PROFILE_UUID\" } }" \
             --output_directory build/ipa \
             --xcargs "DEVELOPMENT_TEAM=$TEAM_ID PROVISIONING_PROFILE_SPECIFIER=$PROFILE_UUID CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution'"
 
