@@ -55,7 +55,9 @@ jobs:
       - name: Build IPA
         run: |
           cd ios
-          fastlane gym --workspace desinsta.xcworkspace --scheme desinsta --clean --export_method app-store --output_directory build/ipa
+          WORKSPACE=$(ls -1td *.xcworkspace | head -n 1)
+          SCHEME="${WORKSPACE%.xcworkspace}"
+          fastlane gym --workspace "$WORKSPACE" --scheme "$SCHEME" --clean --export_method app-store --output_directory build/ipa
 
       - name: Upload to TestFlight
         env:
