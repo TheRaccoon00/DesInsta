@@ -2,14 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const DAILY_LIMIT_MS = 15 * 60 * 1000; // 15 mins default
-const STORAGE_KEY = '@insta_session_data';
-
-export function useSessionTimer() {
-  const [timeRemaining, setTimeRemaining] = useState(DAILY_LIMIT_MS);
+export function useSessionTimer(platform = 'instagram', dailyLimitMs = 15 * 60 * 1000) {
+  const [timeRemaining, setTimeRemaining] = useState(dailyLimitMs);
   const [isLocked, setIsLocked] = useState(false);
   const appState = useRef(AppState.currentState);
   const lastActiveRef = useRef(Date.now());
+  const STORAGE_KEY = `@session_${platform}`;
   
   useEffect(() => {
     loadSession();
@@ -19,14 +17,12 @@ export function useSessionTimer() {
         appState.current.match(/inactive|background/) &&
         nextAppState === 'active'
       ) {
-        // App has come to the foreground!
         lastActiveRef.current = Date.now();
         loadSession();
       } else if (
         appState.current === 'active' &&
         nextAppState.match(/inactive|background/)
       ) {
-        // App has gone to the background!
         saveSession();
       }
       appState.current = nextAppState;
@@ -36,7 +32,7 @@ export function useSessionTimer() {
       subscription.remove();
       saveSession();
     };
-  }, []);
+  }, [platform]);
 
   useEffect(() => {
     if (isLocked) return;
@@ -69,17 +65,19 @@ export function useSessionTimer() {
         const today = new Date().toDateString();
         
         if (parsed.date !== today) {
-          // New day, reset timer
-          setTimeRemaining(DAILY_LIMIT_MS);
+          setTimeRemaining(dailyLimitMs);
           setIsLocked(false);
-          await saveSession(DAILY_LIMIT_MS, false);
+          await saveSession(dailyLimitMs, false);
         } else {
           setTimeRemaining(parsed.timeRemaining);
           setIsLocked(parsed.isLocked || parsed.timeRemaining <= 0);
         }
+      } else {
+        setTimeRemaining(dailyLimitMs);
+        setIsLocked(false);
       }
     } catch (e) {
-      console.error("Failed to load session", e);
+      console.error(`Failed to load session for ${platform}`, e);
     }
   };
 
@@ -91,7 +89,7 @@ export function useSessionTimer() {
         isLocked: locked
       }));
     } catch (e) {
-      console.error("Failed to save session", e);
+      console.error(`Failed to save session for ${platform}`, e);
     }
   };
 

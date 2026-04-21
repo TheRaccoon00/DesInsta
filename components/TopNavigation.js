@@ -2,28 +2,23 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-export default function TopNavigation({ onNavigate, onLock, formatTimeRemaining }) {
+export default function TopNavigation({ title = 'DésInsta', onNavigate, onLock, formatTimeRemaining, onBack }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>DésInsta</Text>
-            <Text style={styles.timerText}>{formatTimeRemaining && formatTimeRemaining()}</Text>
+        <View style={styles.leftGroup}>
+          {onBack && (
+            <TouchableOpacity onPress={onBack} style={styles.backButton}>
+              <Feather name="arrow-left" size={24} color="#1c1c1e" />
+            </TouchableOpacity>
+          )}
+          <View style={styles.logoContainer}>
+              <Text style={styles.logoText}>{title}</Text>
+              <Text style={styles.timerText}>{formatTimeRemaining && formatTimeRemaining()}</Text>
+          </View>
         </View>
 
         <View style={styles.navRow}>
-            <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('https://www.instagram.com/')}>
-                <Feather name="home" size={24} color="#1c1c1e" />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('https://www.instagram.com/direct/')}>
-                <Feather name="message-circle" size={24} color="#1c1c1e" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.navItem} onPress={() => onNavigate('https://www.instagram.com/create/style/')}>
-                <Feather name="plus-square" size={24} color="#1c1c1e" />
-            </TouchableOpacity>
-
             <TouchableOpacity style={[styles.navItem, styles.lockItem]} onPress={onLock}>
                 <Feather name="lock" size={20} color="#fff" />
             </TouchableOpacity>
@@ -38,7 +33,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    borderBottomColor: '#f2f2f7',
   },
   container: {
     paddingHorizontal: 16,
@@ -47,33 +42,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  leftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 8,
+  },
   logoContainer: {
     flexDirection: 'column',
   },
   logoText: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#1c1c1e',
     letterSpacing: -0.5,
   },
   timerText: {
     fontSize: 12,
     color: '#8e8e93',
-    fontWeight: '500',
+    fontWeight: '600',
     marginTop: 2,
+    fontVariant: ['tabular-nums'],
   },
   navRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16, // available in newer react-native
   },
   navItem: {
     padding: 6,
   },
   lockItem: {
-    backgroundColor: '#ff3b30',
-    borderRadius: 8,
-    padding: 8,
-    marginLeft: 8,
+    backgroundColor: '#1c1c1e',
+    borderRadius: 18,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   }
 });

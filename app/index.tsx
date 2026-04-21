@@ -1,83 +1,63 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { useAppSettings } from '../hooks/useAppSettings';
 
-import { useSessionTimer } from '../hooks/useSessionTimer';
-import TopNavigation from '../components/TopNavigation';
-import InstaWebView from '../components/InstaWebView';
+export default function HomeHub() {
+  const router = useRouter();
+  const { PLATFORMS } = useAppSettings();
 
-export default function App() {
-  const { isLocked, lockNow, formatTimeRemaining } = useSessionTimer();
-  const webViewRef = useRef(null);
-  const insets = useSafeAreaInsets();
-  const [scrollLimitReached, setScrollLimitReached] = useState(false);
-
-  // Provide a safe way to forcefully override the scroll limit (for 1 session, mostly as a barrier)
-  const handleBypassScrollLimit = () => {
-    setScrollLimitReached(false);
+  const handleSelectPlatform = (id) => {
+    router.push(`/browser/${id}`);
   };
 
-  const handleNavigate = (url) => {
-    if (webViewRef.current) {
-      const injectJs = `window.location.href = '${url}'; true;`;
-      webViewRef.current.injectJavaScript(injectJs);
-    }
+  const handleOpenSettings = () => {
+    router.push('/settings');
   };
-
-  if (isLocked) {
-    return (
-      <SafeAreaView style={styles.lockContainer}>
-        <Feather name="lock" size={64} color="#1c1c1e" style={{ marginBottom: 24 }} />
-        <Text style={styles.lockTitle}>Time&apos;s Up.</Text>
-        <Text style={styles.lockSubtitle}>
-          You&apos;ve reached your daily Instagram allowance. Go look at something in the real world.
-        </Text>
-      </SafeAreaView>
-    );
-  }
 
   return (
-    <View style={styles.container}>
-      <TopNavigation 
-        onNavigate={handleNavigate} 
-        onLock={lockNow} 
-        formatTimeRemaining={formatTimeRemaining} 
-      />
-      
-      <View style={styles.webContainer}>
-        <InstaWebView 
-          webViewRef={webViewRef}
-          insets={insets}
-          onScrollLimit={() => setScrollLimitReached(true)}
-        />
-
-        {scrollLimitReached && (
-          <View style={styles.overlayModal}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Excessive Scrolling Detected</Text>
-              <Text style={styles.modalSubtitle}>
-                Why are you just scrolling aimlessly? Is this really what you want to be doing right now?
-              </Text>
-              
-              <TouchableOpacity 
-                style={styles.primaryButton} 
-                onPress={lockNow}
-              >
-                <Text style={styles.primaryButtonText}>You&apos;re right, close app.</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.secondaryButton} 
-                onPress={handleBypassScrollLimit}
-              >
-                <Text style={styles.secondaryButtonText}>I need to continue</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>DésInsta Hub</Text>
+        <TouchableOpacity onPress={handleOpenSettings} style={styles.settingsButton}>
+          <Feather name="settings" size={24} color="#1c1c1e" />
+        </TouchableOpacity>
       </View>
-    </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.subtitle}>Choose your platform to browse mindfully.</Text>
+        
+        {Object.entries(PLATFORMS).map(([id, platform]) => (
+          <TouchableOpacity 
+            key={id}
+            style={styles.platformCard}
+            onPress={() => handleSelectPlatform(id)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.iconContainer, { backgroundColor: id === 'instagram' ? '#FEF2F2' : '#F3F4F6' }]}>
+              <Feather 
+                name={id === 'instagram' ? 'instagram' : 'music'} 
+                size={32} 
+                color={id === 'instagram' ? '#E1306C' : '#000000'} 
+              />
+            </View>
+            <View style={styles.platformInfo}>
+              <Text style={styles.platformName}>{platform.name}</Text>
+              <Text style={styles.platformDesc}>Controlled browsing with limits.</Text>
+            </View>
+            <Feather name="chevron-right" size={24} color="#C7C7CC" />
+          </TouchableOpacity>
+        ))}
+
+        <View style={styles.infoBox}>
+          <Feather name="info" size={20} color="#8E8E93" style={{ marginRight: 12 }} />
+          <Text style={styles.infoText}>
+            DésInsta helps you regain control over your digital habits by adding barriers to addictive features.
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -86,86 +66,79 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  webContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-  lockContainer: {
-    flex: 1,
-    backgroundColor: '#f5f5f7',
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
   },
-  lockTitle: {
-    fontSize: 32,
+  title: {
+    fontSize: 28,
     fontWeight: '800',
     color: '#1c1c1e',
+    letterSpacing: -0.5,
+  },
+  settingsButton: {
+    padding: 8,
+  },
+  scrollContent: {
+    padding: 24,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#8E8E93',
+    marginBottom: 32,
+    fontWeight: '500',
+  },
+  platformCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 16,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#F2F2F7',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
-  lockSubtitle: {
-    fontSize: 18,
-    color: '#8e8e93',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  overlayModal: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
-    zIndex: 10,
+    marginRight: 16,
   },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 32,
-    alignItems: 'center',
-    width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 5,
+  platformInfo: {
+    flex: 1,
   },
-  modalTitle: {
-    fontSize: 22,
+  platformName: {
+    fontSize: 18,
     fontWeight: '700',
     color: '#1c1c1e',
-    marginBottom: 12,
-    textAlign: 'center',
+    marginBottom: 4,
   },
-  modalSubtitle: {
-    fontSize: 16,
-    color: '#8e8e93',
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 22,
-  },
-  primaryButton: {
-    backgroundColor: '#1c1c1e',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    width: '100%',
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: '#8e8e93',
+  platformDesc: {
     fontSize: 14,
-    fontWeight: '500',
-  }
+    color: '#8E8E93',
+  },
+  infoBox: {
+    flexDirection: 'row',
+    backgroundColor: '#F9F9FB',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 24,
+    alignItems: 'flex-start',
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#8E8E93',
+    lineHeight: 20,
+  },
 });
