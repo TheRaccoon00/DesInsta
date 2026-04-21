@@ -74,12 +74,15 @@ jobs:
 
       - name: Upload to TestFlight
         env:
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
-          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          FASTLANE_USER: ${{ secrets.APPLE_ID }}
         run: |
           cd ios
-          fastlane beta
+          IPA_PATH=$(ls -1td build/ipa/*.ipa | head -n 1)
+          fastlane pilot upload --ipa "$IPA_PATH" --skip_waiting_for_build_processing true
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
