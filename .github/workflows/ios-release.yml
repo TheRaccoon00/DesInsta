@@ -54,10 +54,22 @@ jobs:
 
       - name: Build IPA
         run: |
+          # Extract Team ID and Provisioning Profile UUID
+          security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision > profile.plist || true
+          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" profile.plist)
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" profile.plist)
+          
           cd ios
           WORKSPACE=$(ls -1td *.xcworkspace | head -n 1)
           SCHEME="${WORKSPACE%.xcworkspace}"
-          fastlane gym --workspace "$WORKSPACE" --scheme "$SCHEME" --clean --export_method app-store --output_directory build/ipa
+          
+          fastlane gym \
+            --workspace "$WORKSPACE" \
+            --scheme "$SCHEME" \
+            --clean \
+            --export_method app-store \
+            --output_directory build/ipa \
+            --xcargs "DEVELOPMENT_TEAM=$TEAM_ID PROVISIONING_PROFILE_SPECIFIER=$PROFILE_UUID CODE_SIGN_STYLE=Manual"
 
       - name: Upload to TestFlight
         env:
