@@ -73,14 +73,18 @@ jobs:
             --xcargs "DEVELOPMENT_TEAM=$TEAM_ID PROVISIONING_PROFILE_SPECIFIER=$PROFILE_UUID CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution'"
 
       - name: Upload to TestFlight
-        env:
-          APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
-          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
-          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
         run: |
           cd ios
+          
+          # Safely create the API Key JSON file using jq to handle newlines in the private key
+          jq -n \
+            --arg key_id "${{ secrets.APP_STORE_KEY_ID }}" \
+            --arg issuer_id "${{ secrets.APP_STORE_ISSUER_ID }}" \
+            --arg key "${{ secrets.APP_STORE_CONNECT_API_KEY }}" \
+            '{key_id: $key_id, issuer_id: $issuer_id, key: $key, in_house: false}' > api_key.json
+            
           IPA_PATH=$(ls -1td build/ipa/*.ipa | head -n 1)
-          fastlane pilot upload --ipa "$IPA_PATH" --skip_waiting_for_build_processing true
+          fastlane pilot upload --ipa "$IPA_PATH" --api_key_path api_key.json --skip_waiting_for_build_processing true
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
