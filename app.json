@@ -9,13 +9,13 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.clementfoissard.desinsta",
-      "buildNumber": "2"
+      "buildNumber": "3"
     },
     "android": {
       "package": "com.clementfoissard.desinsta",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#1c1c1e",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

@@ -112,7 +112,7 @@ export default function SettingsScreen() {
         <View style={styles.aboutSection}>
           <Text style={styles.aboutTitle}>About</Text>
           <Text style={styles.aboutText}>Developed by Clément Foissard</Text>
-          <Text style={styles.versionText}>UseIntent v1.0.0 (Build 2)</Text>
+          <Text style={styles.versionText}>UseIntent v1.0.0 (Build 3)</Text>
           
           <TouchableOpacity 
             style={styles.coffeeButton}
