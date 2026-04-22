@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, SafeAreaView, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -10,19 +11,19 @@ import TopNavigation from '../../components/TopNavigation';
 import PlatformWebView from '../../components/PlatformWebView';
 
 export default function BrowserScreen() {
-  const { platform } = useLocalSearchParams();
+  const { platform: platformId } = useLocalSearchParams();
   const router = useRouter();
-  const { settings, loading } = useAppSettings();
+  const { platforms, loading } = useAppSettings();
   const insets = useSafeAreaInsets();
   const webViewRef = useRef(null);
   const [scrollLimitReached, setScrollLimitReached] = useState(false);
 
-  // Default settings if loading or not found
-  const platformSettings = settings[platform] || { timeLimitMs: 15 * 60 * 1000 };
+  // Get current platform config
+  const platform = platforms[platformId];
   
   const { isLocked, lockNow, formatTimeRemaining } = useSessionTimer(
-    platform, 
-    platformSettings.timeLimitMs
+    platformId, 
+    platform?.timeLimitMs || 15 * 60 * 1000
   );
 
   const handleNavigate = (url) => {
@@ -36,7 +37,7 @@ export default function BrowserScreen() {
     setScrollLimitReached(false);
   };
 
-  if (loading) return null;
+  if (loading || !platform) return null;
 
   if (isLocked) {
     return (
@@ -47,7 +48,7 @@ export default function BrowserScreen() {
         <Feather name="lock" size={64} color="#1c1c1e" style={{ marginBottom: 24 }} />
         <Text style={styles.lockTitle}>Time's Up.</Text>
         <Text style={styles.lockSubtitle}>
-          You've reached your daily {platform} allowance. Go look at something in the real world.
+          You've reached your daily {platform.name} allowance. Go look at something in the real world.
         </Text>
       </SafeAreaView>
     );
@@ -56,7 +57,7 @@ export default function BrowserScreen() {
   return (
     <View style={styles.container}>
       <TopNavigation 
-        title={platform.charAt(0).toUpperCase() + platform.slice(1)}
+        title={platform.name}
         onNavigate={handleNavigate} 
         onLock={lockNow} 
         formatTimeRemaining={formatTimeRemaining} 
@@ -65,8 +66,8 @@ export default function BrowserScreen() {
       
       <View style={styles.webContainer}>
         <PlatformWebView 
-          platform={platform}
-          settings={platformSettings}
+          platform={platformId}
+          settings={platform}
           webViewRef={webViewRef}
           insets={insets}
           onScrollLimit={() => setScrollLimitReached(true)}

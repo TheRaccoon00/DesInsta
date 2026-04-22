@@ -1,21 +1,50 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Switch, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, TextInput, Linking } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useAppSettings } from '../hooks/useAppSettings';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { settings, updatePlatformSettings, PLATFORMS } = useAppSettings();
+  const { platforms, updatePlatformSettings, loading } = useAppSettings();
 
-  const handleToggleBlock = (platformId, key, value) => {
-    updatePlatformSettings(platformId, { [key]: value });
+  const handleToggleBlock = (id: string, key: string, value: boolean) => {
+    updatePlatformSettings(id, { [key]: value });
   };
 
-  const handleTimeChange = (platformId, minutes) => {
+  const handleTimeChange = (id: string, minutes: string) => {
     const ms = parseInt(minutes || '0') * 60 * 1000;
-    updatePlatformSettings(platformId, { timeLimitMs: ms });
+    updatePlatformSettings(id, { timeLimitMs: ms });
   };
+
+  const getLabels = (platform: any) => {
+    const bId = platform.blueprintId;
+    const labels = {
+      explore: 'Block Explore/Search',
+      reels: 'Block Reels/Shorts',
+      exploreDesc: 'Remove discoverability triggers.',
+      reelsDesc: 'Disable infinite video feeds.'
+    };
+
+    if (bId === 'facebook') {
+      labels.explore = 'Block Suggested Posts';
+      labels.reels = 'Block Facebook Reels';
+    } else if (bId === 'youtube') {
+      labels.explore = 'Block Home Feed';
+      labels.reels = 'Block YouTube Shorts';
+    } else if (bId === 'linkedin') {
+      labels.explore = 'Block News Feed';
+    } else if (bId === 'twitter' || bId === 'x') {
+      labels.explore = 'Block "For You" Feed';
+    } else if (bId === 'reddit') {
+      labels.explore = 'Block Popular/All';
+    }
+
+    return labels;
+  };
+
+  if (loading) return null;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -28,13 +57,11 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {Object.keys(PLATFORMS).map(platformId => {
-          const platformSettings = settings[platformId];
-          if (!platformSettings) return null;
-
+        {(Object.entries(platforms) as [string, any][]).map(([id, platform]) => {
+          const labels = getLabels(platform);
           return (
-            <View key={platformId} style={styles.section}>
-              <Text style={styles.sectionTitle}>{PLATFORMS[platformId].name}</Text>
+            <View key={id} style={styles.section}>
+              <Text style={styles.sectionTitle}>{platform.name}</Text>
               
               <View style={styles.settingRow}>
                 <View style={styles.settingInfo}>
@@ -44,37 +71,57 @@ export default function SettingsScreen() {
                 <TextInput
                   style={styles.timeInput}
                   keyboardType="numeric"
-                  defaultValue={String(Math.floor(platformSettings.timeLimitMs / 60000))}
-                  onChangeText={(val) => handleTimeChange(platformId, val)}
+                  defaultValue={String(Math.floor(platform.timeLimitMs / 60000))}
+                  onChangeText={(val) => handleTimeChange(id, val)}
                 />
               </View>
 
-              <View style={styles.settingRow}>
-                <View style={styles.settingInfo}>
-                  <Text style={styles.settingLabel}>Block Explore/Search</Text>
-                  <Text style={styles.settingDesc}>Remove discoverability triggers.</Text>
-                </View>
-                <Switch
-                  value={platformSettings.blockExplore}
-                  onValueChange={(val) => handleToggleBlock(platformId, 'blockExplore', val)}
-                  trackColor={{ false: '#E9E9EB', true: '#34C759' }}
-                />
-              </View>
+              {platform.native && (
+                <>
+                  <View style={styles.settingRow}>
+                    <View style={styles.settingInfo}>
+                      <Text style={styles.settingLabel}>{labels.explore}</Text>
+                      <Text style={styles.settingDesc}>{labels.exploreDesc}</Text>
+                    </View>
+                    <Switch
+                      value={platform.blockExplore}
+                      onValueChange={(val) => handleToggleBlock(id, 'blockExplore', val)}
+                      trackColor={{ false: '#E9E9EB', true: '#34C759' }}
+                    />
+                  </View>
 
-              <View style={styles.settingRow}>
-                <View style={styles.settingInfo}>
-                  <Text style={styles.settingLabel}>Block Reels/Shorts</Text>
-                  <Text style={styles.settingDesc}>Disable infinite video feeds.</Text>
-                </View>
-                <Switch
-                  value={platformSettings.blockReels}
-                  onValueChange={(val) => handleToggleBlock(platformId, 'blockReels', val)}
-                  trackColor={{ false: '#E9E9EB', true: '#34C759' }}
-                />
-              </View>
+                  {platform.blueprintId !== 'linkedin' && platform.blueprintId !== 'twitter' && platform.blueprintId !== 'reddit' && (
+                    <View style={styles.settingRow}>
+                      <View style={styles.settingInfo}>
+                        <Text style={styles.settingLabel}>{labels.reels}</Text>
+                        <Text style={styles.settingDesc}>{labels.reelsDesc}</Text>
+                      </View>
+                      <Switch
+                        value={platform.blockReels}
+                        onValueChange={(val) => handleToggleBlock(id, 'blockReels', val)}
+                        trackColor={{ false: '#E9E9EB', true: '#34C759' }}
+                      />
+                    </View>
+                  )}
+                </>
+              )}
             </View>
           );
         })}
+
+        <View style={styles.aboutSection}>
+          <Text style={styles.aboutTitle}>About</Text>
+          <Text style={styles.aboutText}>Developed by Clément Foissard</Text>
+          <Text style={styles.versionText}>UseIntent v1.0.0 (Build 2)</Text>
+          
+          <TouchableOpacity 
+            style={styles.coffeeButton}
+            onPress={() => Linking.openURL('https://buymeacoffee.com/clementfoissard')}
+          >
+            <Feather name="coffee" size={18} color="#FFDD00" style={{ marginRight: 8 }} />
+            <Text style={styles.coffeeButtonText}>Buy me a coffee</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -149,5 +196,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#1c1c1e',
+  },
+  aboutSection: {
+    marginTop: 40,
+    marginBottom: 60,
+    alignItems: 'center',
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#F2F2F7',
+  },
+  aboutTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1c1c1e',
+    marginBottom: 8,
+  },
+  aboutText: {
+    fontSize: 14,
+    color: '#1c1c1e',
+    marginBottom: 4,
+  },
+  versionText: {
+    fontSize: 12,
+    color: '#8E8E93',
+    marginBottom: 20,
+  },
+  coffeeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1c1c1e',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+  },
+  coffeeButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
   },
 });

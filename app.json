@@ -1,23 +1,23 @@
 {
   "expo": {
-    "name": "DésInsta",
-    "slug": "desinsta",
+    "name": "UseIntent",
+    "slug": "useintent",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "desinsta",
+    "scheme": "useintent",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.clementfoissard.desinsta",
-      "buildNumber": "1"
+      "buildNumber": "2"
     },
     "android": {
       "package": "com.clementfoissard.desinsta",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
-        "backgroundColor": "#FFFFFF",
+        "backgroundColor": "#1c1c1e",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -37,9 +37,9 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#1c1c1e",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#1c1c1e"
           }
         }
       ]
