@@ -31,7 +31,14 @@ const getInjectedJS = (platform = {}) => {
       if (bId === 'youtube') {
         if (${blockReels}) {
           // Hide Shorts tab and shelf
-          document.querySelectorAll('a[href*="/shorts"], ytm-reel-shelf-renderer').forEach(el => el.style.display = 'none');
+          document.querySelectorAll('a[href*="/shorts"], ytm-reel-shelf-renderer, [title="Shorts"], [aria-label="Shorts"], ytm-shorts-lockup-view-model').forEach(el => {
+            const pivot = el.closest('ytm-pivot-bar-item-renderer');
+            if (pivot) pivot.style.display = 'none';
+            else {
+              const target = el.tagName === 'SVG' ? el.closest('a') || el.closest('div[role="button"]') : el;
+              if (target) target.style.display = 'none';
+            }
+          });
         }
         if (${blockExplore}) {
           // Hide Home feed

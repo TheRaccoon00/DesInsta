@@ -2,13 +2,80 @@ import { useState, useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const getTodayString = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export function useSessionTimer(platform = 'instagram', dailyLimitMs = 15 * 60 * 1000) {
-  const [timeRemaining, setTimeRemaining] = useState(dailyLimitMs);
+  const [usedTimeMs, setUsedTimeMs] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
+
+  const usedTimeRef = useRef(0);
+  const isLockedRef = useRef(false);
   const appState = useRef(AppState.currentState);
   const lastActiveRef = useRef(Date.now());
   const STORAGE_KEY = `@session_${platform}`;
-  
+
+  // Dynamic remaining time calculation
+  const timeRemaining = Math.max(0, dailyLimitMs - usedTimeMs);
+
+  const saveSession = async (used = usedTimeRef.current, locked = isLockedRef.current) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
+        date: getTodayString(),
+        usedTimeMs: used,
+        isLocked: locked,
+        dailyLimitMs
+      }));
+    } catch (e) {
+      console.error(`Failed to save session for ${platform}`, e);
+    }
+  };
+
+  const loadSession = async () => {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEY);
+      const today = getTodayString();
+
+      if (data) {
+        const parsed = JSON.parse(data);
+        const savedDate = parsed.date;
+
+        // Reset if date is different (midnight reset based on local date)
+        if (savedDate !== today && savedDate !== new Date().toDateString()) {
+          usedTimeRef.current = 0;
+          setUsedTimeMs(0);
+          isLockedRef.current = false;
+          setIsLocked(false);
+          await saveSession(0, false);
+        } else {
+          let currentUsed = 0;
+          if (typeof parsed.usedTimeMs === 'number') {
+            currentUsed = parsed.usedTimeMs;
+          } else if (typeof parsed.timeRemaining === 'number' && typeof parsed.dailyLimitMs === 'number') {
+            // Migration for older schema
+            currentUsed = Math.max(0, parsed.dailyLimitMs - parsed.timeRemaining);
+          }
+
+          usedTimeRef.current = currentUsed;
+          setUsedTimeMs(currentUsed);
+
+          const locked = parsed.isLocked || currentUsed >= dailyLimitMs;
+          isLockedRef.current = locked;
+          setIsLocked(locked);
+        }
+      } else {
+        usedTimeRef.current = 0;
+        setUsedTimeMs(0);
+        isLockedRef.current = false;
+        setIsLocked(false);
+      }
+    } catch (e) {
+      console.error(`Failed to load session for ${platform}`, e);
+    }
+  };
+
   useEffect(() => {
     loadSession();
 
@@ -34,8 +101,22 @@ export function useSessionTimer(platform = 'instagram', dailyLimitMs = 15 * 60 *
     };
   }, [platform]);
 
+  // Update lock status when limit or used time changes
+  useEffect(() => {
+    if (usedTimeMs >= dailyLimitMs) {
+      setIsLocked(true);
+      isLockedRef.current = true;
+    } else {
+      setIsLocked(false);
+      isLockedRef.current = false;
+    }
+  }, [dailyLimitMs, usedTimeMs]);
+
+  // Timer interval for active session
   useEffect(() => {
     if (isLocked) return;
+
+    lastActiveRef.current = Date.now();
 
     const interval = setInterval(() => {
       if (appState.current === 'active') {
@@ -43,60 +124,28 @@ export function useSessionTimer(platform = 'instagram', dailyLimitMs = 15 * 60 *
         const elapsed = now - lastActiveRef.current;
         lastActiveRef.current = now;
 
-        setTimeRemaining(prev => {
-          const newTime = prev - elapsed;
-          if (newTime <= 0) {
-            setIsLocked(true);
-            return 0;
-          }
-          return newTime;
-        });
+        const newUsed = usedTimeRef.current + elapsed;
+        usedTimeRef.current = newUsed;
+        setUsedTimeMs(newUsed);
+
+        if (newUsed >= dailyLimitMs) {
+          setIsLocked(true);
+          isLockedRef.current = true;
+          saveSession(newUsed, true);
+        }
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isLocked]);
-
-  const loadSession = async () => {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEY);
-      if (data) {
-        const parsed = JSON.parse(data);
-        const today = new Date().toDateString();
-        
-        if (parsed.date !== today) {
-          setTimeRemaining(dailyLimitMs);
-          setIsLocked(false);
-          await saveSession(dailyLimitMs, false);
-        } else {
-          setTimeRemaining(parsed.timeRemaining);
-          setIsLocked(parsed.isLocked || parsed.timeRemaining <= 0);
-        }
-      } else {
-        setTimeRemaining(dailyLimitMs);
-        setIsLocked(false);
-      }
-    } catch (e) {
-      console.error(`Failed to load session for ${platform}`, e);
-    }
-  };
-
-  const saveSession = async (remaining = timeRemaining, locked = isLocked) => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
-        date: new Date().toDateString(),
-        timeRemaining: remaining,
-        isLocked: locked
-      }));
-    } catch (e) {
-      console.error(`Failed to save session for ${platform}`, e);
-    }
-  };
+  }, [isLocked, dailyLimitMs]);
 
   const lockNow = async () => {
-    setTimeRemaining(0);
+    const lockedUsed = Math.max(usedTimeRef.current, dailyLimitMs);
+    usedTimeRef.current = lockedUsed;
+    setUsedTimeMs(lockedUsed);
     setIsLocked(true);
-    await saveSession(0, true);
+    isLockedRef.current = true;
+    await saveSession(lockedUsed, true);
   };
 
   const formatTimeRemaining = () => {

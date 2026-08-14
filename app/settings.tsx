@@ -109,6 +109,22 @@ export default function SettingsScreen() {
           );
         })}
 
+        <View style={styles.guideSection}>
+          <TouchableOpacity 
+            style={styles.guideButton}
+            onPress={() => router.push('/block-real-apps' as any)}
+          >
+            <View style={styles.guideButtonContent}>
+              <Feather name="smartphone" size={22} color="#1c1c1e" />
+              <View style={styles.guideButtonTextContainer}>
+                <Text style={styles.guideButtonTitle}>Block Native Apps</Text>
+                <Text style={styles.guideButtonDesc}>Setup guide to lock real apps</Text>
+              </View>
+            </View>
+            <Feather name="chevron-right" size={20} color="#C7C7CC" />
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.aboutSection}>
           <Text style={styles.aboutTitle}>About</Text>
           <Text style={styles.aboutText}>Developed by Clément Foissard</Text>
@@ -196,6 +212,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#1c1c1e',
+  },
+  guideSection: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  guideButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F9F9FB',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F2F2F7',
+  },
+  guideButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  guideButtonTextContainer: {
+    marginLeft: 16,
+  },
+  guideButtonTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1c1c1e',
+    marginBottom: 4,
+  },
+  guideButtonDesc: {
+    fontSize: 13,
+    color: '#8E8E93',
   },
   aboutSection: {
     marginTop: 40,
