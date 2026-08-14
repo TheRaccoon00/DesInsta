@@ -2,7 +2,7 @@
   "expo": {
     "name": "UseIntent",
     "slug": "useintent",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "useintent",
@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.clementfoissard.desinsta",
-      "buildNumber": "3"
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.clementfoissard.desinsta",
