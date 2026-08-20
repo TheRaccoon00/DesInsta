@@ -59,16 +59,6 @@ export const BLUEPRINTS = {
     blockExplore: true, // Block Feed
     native: true
   },
-  twitter: {
-    blueprintId: 'twitter',
-    name: 'X / Twitter',
-    url: 'https://www.twitter.com',
-    domain: 'twitter.com',
-    iconName: 'twitter',
-    timeLimitMs: 15 * 60 * 1000,
-    blockExplore: true, // Block "For You"
-    native: true
-  },
   reddit: {
     blueprintId: 'reddit',
     name: 'Reddit',

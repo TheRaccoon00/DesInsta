@@ -14,43 +14,60 @@ const getInjectedJS = (platform = {}) => {
       
       if (bId === 'facebook') {
         if (${blockReels}) {
-          // Hide Reels sections in feed and sidebar
-          document.querySelectorAll('div[aria-label="Reels"], a[href*="/reels/"]').forEach(el => el.style.display = 'none');
+          // Hide Reels links, tabs, units, and watch sections
+          document.querySelectorAll('a[href*="/reel/"], a[href*="/reels/"], a[href*="reel_id"], div[aria-label*="Reels"], div[aria-label*="reels"], div[aria-label*="Short videos"], div[aria-label*="Vidéos courtes"], div[data-sigil*="reel"], [data-tab-key="reels"], a[href*="/watch/"]').forEach(el => {
+            const unit = el.closest('article') || el.closest('div[role="article"]') || el.closest('div[data-sigil*="story"]') || el.closest('div[data-mcomponent="MContainer"]') || el;
+            unit.style.setProperty('display', 'none', 'important');
+          });
         }
         if (${blockExplore}) {
-          // Hide Suggested content
-          document.querySelectorAll('div').forEach(el => {
-             if (el.textContent && (el.textContent.includes('Suggested for you') || el.textContent.includes('Suggéré pour vous'))) {
-                const post = el.closest('div[data-testid="fbfeed_story"]') || el.closest('div[role="article"]');
-                if (post) post.style.display = 'none';
-             }
+          // Hide Suggested for you / Suggéré pour vous / People you may know
+          const suggestedKeywords = [
+            'Suggested for you', 'Suggéré pour vous', 'Suggested post', 'Publication suggérée',
+            'People you may know', 'Vous connaissez peut-être', 'Recommended for you', 'Recommandé pour vous'
+          ];
+          document.querySelectorAll('span, div, h3, h4, header').forEach(el => {
+            const text = el.textContent ? el.textContent.trim() : '';
+            if (suggestedKeywords.some(kw => text === kw || text.startsWith(kw))) {
+              const post = el.closest('article') || el.closest('div[role="article"]') || el.closest('div[data-sigil*="story"]') || el.closest('div[data-ft]') || el.closest('div._5pcr');
+              if (post) post.style.setProperty('display', 'none', 'important');
+            }
           });
         }
       }
 
       if (bId === 'youtube') {
         if (${blockReels}) {
-          // Hide Shorts tab and shelf
-          document.querySelectorAll('a[href*="/shorts"], ytm-reel-shelf-renderer, [title="Shorts"], [aria-label="Shorts"], ytm-shorts-lockup-view-model').forEach(el => {
-            const pivot = el.closest('ytm-pivot-bar-item-renderer');
-            if (pivot) pivot.style.display = 'none';
+          // Hide Shorts tab, shelf and lockups
+          document.querySelectorAll('a[href*="/shorts"], ytm-reel-shelf-renderer, [title="Shorts"], [aria-label="Shorts"], ytm-shorts-lockup-view-model, .pivot-shorts').forEach(el => {
+            const pivot = el.closest('ytm-pivot-bar-item-renderer') || el.closest('.pivot-bar-item');
+            if (pivot) pivot.style.setProperty('display', 'none', 'important');
             else {
               const target = el.tagName === 'SVG' ? el.closest('a') || el.closest('div[role="button"]') : el;
-              if (target) target.style.display = 'none';
+              if (target) target.style.setProperty('display', 'none', 'important');
             }
           });
         }
         if (${blockExplore}) {
-          // Hide Home feed
-          const homeFeed = document.querySelector('ytm-browse[page-type="home"]');
-          if (homeFeed) homeFeed.style.display = 'none';
+          // Hide Home feed on YouTube root/home
+          const isHome = window.location.pathname === '/' || window.location.pathname === '' || window.location.pathname === '/index';
+          if (isHome && !window.location.search.includes('search_query')) {
+            document.querySelectorAll('ytm-browse, ytm-single-column-browse-results-renderer, ytm-rich-grid-renderer, ytm-item-section-renderer, #contents, .rich-grid-renderer').forEach(el => {
+              el.style.setProperty('display', 'none', 'important');
+            });
+          }
         }
       }
 
       if (bId === 'linkedin') {
         if (${blockExplore}) {
-          // Hide main feed
-          document.querySelectorAll('div[data-test-feed-container], .scaffold-finite-scroll').forEach(el => el.style.display = 'none');
+          // Hide main feed on mobile and desktop web
+          const isFeedPage = window.location.pathname.includes('/feed') || window.location.pathname === '/' || window.location.pathname === '';
+          if (isFeedPage) {
+            document.querySelectorAll('div[data-test-feed-container], .scaffold-finite-scroll, #feed-container, .feed-outlet, .feed-shared-update-v2, div[data-type="UPDATE"], div[data-id*="urn:li:activity"], main#main section, ul.feed-updates, section.feed-updates, article.update, .feed-container, main section').forEach(el => {
+              el.style.setProperty('display', 'none', 'important');
+            });
+          }
         }
       }
 
@@ -99,11 +116,44 @@ const getInjectedJS = (platform = {}) => {
            if (banner) banner.style.display = 'none';
         }
       });
+
+      // 4. Force momentum scrolling inertia
+      if (!document.getElementById('custom-scroll-style')) {
+        try {
+          const style = document.createElement('style');
+          style.id = 'custom-scroll-style';
+          style.innerHTML = "* { -webkit-overflow-scrolling: touch !important; } html, body { -webkit-overflow-scrolling: touch !important; }";
+          document.head.appendChild(style);
+        } catch (e) {}
+      }
     } catch (e) {}
   }
 
+  // 5. Prevent automatic fullscreen video takeover & enforce inline playback
+  try {
+    if (HTMLVideoElement) {
+      HTMLVideoElement.prototype.requestFullscreen = function() { return Promise.resolve(); };
+      HTMLVideoElement.prototype.webkitRequestFullscreen = function() { return Promise.resolve(); };
+      HTMLVideoElement.prototype.webkitEnterFullscreen = function() {};
+      HTMLVideoElement.prototype.webkitEnterFullScreen = function() {};
+    }
+  } catch(e) {}
+
+  function enforceInlineVideos() {
+    try {
+      document.querySelectorAll('video').forEach(v => {
+        v.setAttribute('playsinline', 'true');
+        v.setAttribute('webkit-playsinline', 'true');
+      });
+    } catch(e) {}
+  }
+  enforceInlineVideos();
+
   sanitizeDOM();
-  const observer = new MutationObserver(sanitizeDOM);
+  const observer = new MutationObserver(() => {
+    sanitizeDOM();
+    enforceInlineVideos();
+  });
   observer.observe(document.body, { childList: true, subtree: true });
 
   let maxScrollY = 0;
@@ -115,7 +165,7 @@ const getInjectedJS = (platform = {}) => {
         maxScrollY = 0;
       }
     }
-  });
+  }, { passive: true });
 
   return true;
 })();
@@ -143,6 +193,11 @@ export default function PlatformWebView({ settings, webViewRef, insets, onScroll
         onMessage={handleMessage}
         allowsBackForwardNavigationGestures
         sharedCookiesEnabled={true}
+        allowsInlineMediaPlayback={true}
+        mediaPlaybackRequiresUserAction={true}
+        decelerationRate="normal"
+        overScrollMode="always"
+        nestedScrollEnabled={true}
         style={styles.webview}
         startInLoadingState={true}
         domStorageEnabled={true}
