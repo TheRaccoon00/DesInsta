@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.clementfoissard.desinsta",
-      "buildNumber": "1"
+      "buildNumber": "2"
     },
     "android": {
       "package": "com.clementfoissard.desinsta",
