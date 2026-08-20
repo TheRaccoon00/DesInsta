@@ -57,12 +57,28 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.guideSection}>
+          <TouchableOpacity
+            style={styles.guideButton}
+            onPress={() => router.push('/block-real-apps' as any)}
+          >
+            <View style={styles.guideButtonContent}>
+              <Feather name="smartphone" size={22} color="#1c1c1e" />
+              <View style={styles.guideButtonTextContainer}>
+                <Text style={styles.guideButtonTitle}>Block Native Apps</Text>
+                <Text style={styles.guideButtonDesc}>Setup guide to lock real apps</Text>
+              </View>
+            </View>
+            <Feather name="chevron-right" size={20} color="#C7C7CC" />
+          </TouchableOpacity>
+        </View>
+
         {(Object.entries(platforms) as [string, any][]).map(([id, platform]) => {
           const labels = getLabels(platform);
           return (
             <View key={id} style={styles.section}>
               <Text style={styles.sectionTitle}>{platform.name}</Text>
-              
+
               <View style={styles.settingRow}>
                 <View style={styles.settingInfo}>
                   <Text style={styles.settingLabel}>Daily Time Limit (mins)</Text>
@@ -109,34 +125,10 @@ export default function SettingsScreen() {
           );
         })}
 
-        <View style={styles.guideSection}>
-          <TouchableOpacity 
-            style={styles.guideButton}
-            onPress={() => router.push('/block-real-apps' as any)}
-          >
-            <View style={styles.guideButtonContent}>
-              <Feather name="smartphone" size={22} color="#1c1c1e" />
-              <View style={styles.guideButtonTextContainer}>
-                <Text style={styles.guideButtonTitle}>Block Native Apps</Text>
-                <Text style={styles.guideButtonDesc}>Setup guide to lock real apps</Text>
-              </View>
-            </View>
-            <Feather name="chevron-right" size={20} color="#C7C7CC" />
-          </TouchableOpacity>
-        </View>
-
         <View style={styles.aboutSection}>
           <Text style={styles.aboutTitle}>About</Text>
-          <Text style={styles.aboutText}>Developed by Clément Foissard</Text>
-          <Text style={styles.versionText}>UseIntent v1.0.0 (Build 3)</Text>
-          
-          <TouchableOpacity 
-            style={styles.coffeeButton}
-            onPress={() => Linking.openURL('https://buymeacoffee.com/clementfoissard')}
-          >
-            <Feather name="coffee" size={18} color="#FFDD00" style={{ marginRight: 8 }} />
-            <Text style={styles.coffeeButtonText}>Buy me a coffee</Text>
-          </TouchableOpacity>
+          <Text style={styles.aboutText}>Developed by Clément Foissard using AI</Text>
+          <Text style={styles.versionText}>UseIntent v1.1.0 (Build 2)</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -266,19 +258,6 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 12,
     color: '#8E8E93',
-    marginBottom: 20,
-  },
-  coffeeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1c1c1e',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-  },
-  coffeeButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
+    marginBottom: 0,
   },
 });
